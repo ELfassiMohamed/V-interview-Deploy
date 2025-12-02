@@ -24,13 +24,24 @@ import com.patient_service.models.Patient;
 import com.patient_service.services.JwtService;
 import com.patient_service.services.PatientService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@Tag(name = "Authentication", description = "APIs d'authentification et gestion de profil patient")
 public class AuthController {
-	@Autowired
+    
+    @Autowired
     private PatientService patientService;
     
     @Autowired
@@ -40,15 +51,28 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
     
     
+    @Operation(
+        summary = "Inscription d'un nouveau patient",
+        description = "Permet à un nouveau patient de créer un compte. Le compte sera en attente d'approbation par un fournisseur."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Inscription réussie",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Données invalides ou erreur lors de l'inscription",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))
+        )
+    })
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         try {
-            // Encode password before saving
-            
             Patient patient = patientService.registerPatient(request.getEmail(), request.getPassword(), request);
             String token = jwtService.generateToken(patient);
             
-            // Create enhanced response with account status
             AuthResponse response = new AuthResponse(
                 token, 
                 "Registration successful. Your account is pending provider approval.", 
@@ -56,7 +80,6 @@ public class AuthController {
                 patient.getAccountStatus(),
                 patientService.canAccessMedicalHistory(patient),
                 patient.getRole().getAuthority()
-                		
             );
             
             return ResponseEntity.ok(response);
@@ -65,6 +88,23 @@ public class AuthController {
         }
     }
     
+    
+    @Operation(
+        summary = "Connexion d'un patient",
+        description = "Authentifie un patient avec son email et mot de passe et retourne un token JWT"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Connexion réussie",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Identifiants invalides",
+            content = @Content(schema = @Schema(implementation = AuthResponse.class))
+        )
+    })
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         try {
@@ -75,7 +115,6 @@ public class AuthController {
             Patient patient = (Patient) authentication.getPrincipal();
             String token = jwtService.generateToken(patient);
             
-            // Create enhanced response with account status
             String message = patient.getAccountStatus() == AccountStatus.ACTIVE 
                 ? "Login successful" 
                 : "Login successful. " + patient.getAccountStatus().getDescription();
@@ -96,8 +135,29 @@ public class AuthController {
     }
     
     
+    @Operation(
+        summary = "Obtenir le statut du profil patient",
+        description = "Récupère les informations sur le statut du profil du patient connecté",
+        security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Statut récupéré avec succès",
+            content = @Content(schema = @Schema(implementation = ProfileStatusResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Erreur lors de la récupération du statut"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié"
+        )
+    })
     @GetMapping("/profile-status")
-    public ResponseEntity<ProfileStatusResponse> getProfileStatus(Authentication authentication) {
+    public ResponseEntity<ProfileStatusResponse> getProfileStatus(
+            @Parameter(hidden = true) Authentication authentication) {
         try {
             Patient patient = (Patient) authentication.getPrincipal();
             ProfileStatusResponse status = patientService.getProfileStatus(patient.getId());
@@ -107,11 +167,32 @@ public class AuthController {
         }
     }
     
+    
+    @Operation(
+        summary = "Obtenir le profil complet du patient",
+        description = "Récupère toutes les informations du profil du patient connecté",
+        security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Profil récupéré avec succès",
+            content = @Content(schema = @Schema(implementation = PatientProfileDTO.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Erreur lors de la récupération du profil"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié"
+        )
+    })
     @GetMapping("/profile")
-    public ResponseEntity<PatientProfileDTO> getProfile(Authentication authentication) {
+    public ResponseEntity<PatientProfileDTO> getProfile(
+            @Parameter(hidden = true) Authentication authentication) {
         try {
             Patient patient = (Patient) authentication.getPrincipal();
-            // Refresh patient data from database
             patient = patientService.findById(patient.getId());
             
             PatientProfileDTO profileDTO = convertToProfileDTO(patient);
@@ -121,10 +202,36 @@ public class AuthController {
         }
     }
     
+    
+    @Operation(
+        summary = "Compléter/Mettre à jour le profil patient",
+        description = "Permet au patient de compléter ou modifier ses informations personnelles",
+        security = @SecurityRequirement(name = "bearer-jwt")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Profil mis à jour avec succès",
+            content = @Content(schema = @Schema(implementation = PatientProfileDTO.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Données invalides ou erreur lors de la mise à jour"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Non authentifié"
+        )
+    })
     @PutMapping("/complete-profile")
     public ResponseEntity<PatientProfileDTO> updateProfile(
-            @RequestBody Patient profileUpdates, 
-            Authentication authentication) {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Informations du profil à mettre à jour",
+                required = true,
+                content = @Content(schema = @Schema(implementation = Patient.class))
+            )
+            @RequestBody Patient profileUpdates,
+            @Parameter(hidden = true) Authentication authentication) {
         try {
             Patient currentPatient = (Patient) authentication.getPrincipal();
             
@@ -142,7 +249,6 @@ public class AuthController {
         PatientProfileDTO dto = new PatientProfileDTO();
         dto.setId(patient.getId());
         dto.setEmail(patient.getEmail());
-        //dto.setRole(patient.getRole());
         dto.setAccountStatus(patient.getAccountStatus());
         dto.setFirstName(patient.getFirstName());
         dto.setLastName(patient.getLastName());
