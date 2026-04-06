@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',    # For token authentication
     'vinterview',                  # Your app
     'corsheaders',                 # CORS Configuration
+    'drf_spectacular',             # Swagger/OpenAPI documentation
 ]
 
 MIDDLEWARE = [
@@ -147,6 +148,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Swagger/OpenAPI Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'V-Interview API',
+    'DESCRIPTION': 'AI-driven interview simulation and evaluation API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # CORS settings
