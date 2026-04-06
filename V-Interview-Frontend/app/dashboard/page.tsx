@@ -6,28 +6,8 @@ import Link from "next/link"
 
 export default function Dashboard() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
-      <div className="absolute top-40 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-1000"></div>
-      <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-2000"></div>
-
-      {/* Header */}
-      <div className="relative z-10 px-4 lg:px-6 py-6">
-        <div className="container mx-auto">
-          <Link href="/" className="flex items-center justify-center mb-8">
-            <div className="h-10 w-10 mr-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-              <Brain className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-bold text-2xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              VInterview
-            </span>
-          </Link>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-8 relative">
+      <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold tracking-tight mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
               Virtual Interview Simulator
@@ -263,7 +243,6 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Quick Actions */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/profile">
               <Card className="border-cyan-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-all cursor-pointer group">
@@ -303,6 +282,5 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </div>
   )
 }

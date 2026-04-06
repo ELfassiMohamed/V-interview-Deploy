@@ -198,45 +198,13 @@ export default function InterviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
-      <div className="absolute top-40 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-1000"></div>
-      <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-2000"></div>
-
-      {/* Header */}
-      <div className="relative z-10 px-4 lg:px-6 py-6">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/dashboard"
-              className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Dashboard
-            </Link>
-            <Link href="/" className="flex items-center">
-              <div className="h-8 w-8 mr-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                VInterview
-              </span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div
-        className="container mx-auto px-4 py-8 relative z-10 flex flex-col"
-        style={{ height: "calc(100vh - 120px)" }}
-      >
+    <div className="container mx-auto px-4 py-8 relative flex flex-col h-full">
         <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
               Frontend Developer Interview
             </h1>
-            <div className="text-sm text-purple-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-md">
+            <div className="text-sm text-purple-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-md border border-purple-100 shadow-sm">
               Question {currentQuestion} of {totalQuestions}
             </div>
           </div>
@@ -245,7 +213,7 @@ export default function InterviewPage() {
             <Progress value={(currentQuestion / totalQuestions) * 100} className="h-3 bg-white/50" />
           </div>
 
-          <Card className="flex-1 flex flex-col overflow-hidden border-purple-200 bg-white/80 backdrop-blur-md shadow-xl">
+          <Card className="flex-1 flex flex-col overflow-hidden border-purple-200 bg-white/80 backdrop-blur-md shadow-xl min-h-[500px]">
             <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.map((message) => (
                 <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -333,7 +301,7 @@ export default function InterviewPage() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Type your answer or use voice input..."
-                    className="min-h-[80px] resize-none pr-12 border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white/80 backdrop-blur-md"
+                    className="min-h-[80px] resize-none pr-12 border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white/80 backdrop-blur-md shadow-sm"
                     disabled={isTyping}
                   />
                   {isSupported && (
@@ -396,6 +364,5 @@ export default function InterviewPage() {
           </Card>
         </div>
       </div>
-    </div>
   )
 }

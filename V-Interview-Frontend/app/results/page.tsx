@@ -33,37 +33,8 @@ export default function ResultsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
-      <div className="absolute top-40 right-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-1000"></div>
-      <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse delay-2000"></div>
-
-      {/* Header */}
-      <div className="relative z-10 px-4 lg:px-6 py-6">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/dashboard"
-              className="flex items-center text-purple-600 hover:text-purple-700 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Dashboard
-            </Link>
-            <Link href="/" className="flex items-center">
-              <div className="h-8 w-8 mr-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                VInterview
-              </span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <div className="max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-8 relative">
+      <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h1 className="text-4xl font-bold tracking-tight mb-2 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
@@ -283,6 +254,5 @@ export default function ResultsPage() {
           </Card>
         </div>
       </div>
-    </div>
   )
 }
