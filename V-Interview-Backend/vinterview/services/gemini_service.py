@@ -6,7 +6,7 @@ import re
 class GeminiService:
     def __init__(self):
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')
     
     def generate_questions(self, interview_entries):
         prompt = self._build_prompt(interview_entries)
