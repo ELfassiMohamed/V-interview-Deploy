@@ -8,8 +8,10 @@ from django.contrib.auth import login, logout
 from .serializers import UserSignUpSerializer, UserSignInSerializer, UserProfileSerializer
 from .models import User, InterviewEntries, Question, Answer, InterviewResult
 from .services.gemini_service import GeminiService
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 import logging
 
+@extend_schema(request=UserSignUpSerializer, responses={201: OpenApiResponse(description="User created successfully")})
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def sign_up(request):
@@ -33,6 +35,7 @@ def sign_up(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(request=UserSignInSerializer, responses={200: OpenApiResponse(description="Login successful")})
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def sign_in(request):
@@ -57,6 +60,7 @@ def sign_in(request):
     
     return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
+@extend_schema(responses={200: OpenApiResponse(description="Logout successful")})
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sign_out(request):
@@ -75,6 +79,7 @@ def sign_out(request):
             'error': 'Something went wrong during logout'
         }, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(responses=UserProfileSerializer)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profile(request):
@@ -84,6 +89,7 @@ def get_profile(request):
     serializer = UserProfileSerializer(request.user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@extend_schema(request=UserProfileSerializer, responses=UserProfileSerializer)
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
@@ -100,6 +106,7 @@ def update_profile(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema(responses={200: OpenApiResponse(description="Profile deleted successfully")})
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_profile(request):
