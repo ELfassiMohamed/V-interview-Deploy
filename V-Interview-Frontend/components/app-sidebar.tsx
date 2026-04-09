@@ -5,6 +5,7 @@ import { BarChart3, FileText, History, Settings, User, LogOut, X, Brain } from "
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
@@ -21,6 +22,22 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
   const pathname = usePathname()
+  const { user, logout, isAuthenticated } = useAuth()
+
+  const userInitials = user
+    ? (user.first_name && user.last_name
+        ? `${user.first_name[0]}${user.last_name[0]}`
+        : user.username.substring(0, 2)
+      ).toUpperCase()
+    : "??"
+
+  const displayName = user
+    ? user.first_name && user.last_name
+      ? `${user.first_name} ${user.last_name}`
+      : user.username
+    : "Guest"
+
+  const displayEmail = user?.email || ""
 
   return (
     <>
@@ -82,17 +99,22 @@ export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
             <div className="flex items-center justify-between rounded-lg border p-3 bg-gradient-to-r from-purple-50 to-blue-50">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-blue-500 text-white">
-                    JD
+                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt={displayName} />
+                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs">
+                    {userInitials}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">John Doe</p>
-                  <p className="text-xs text-gray-500">john@example.com</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
+                  <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-red-600">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-500 hover:text-red-600"
+                onClick={logout}
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>

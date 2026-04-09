@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { cn } from "@/lib/utils"
+import { Providers } from "@/app/providers"
+import { ClientSidebar } from "@/app/client-sidebar"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   title: "VInterview - Master Your Next Job Interview",
   description:
     "Practice with our AI interviewer, get personalized feedback, and boost your confidence. Land your dream job with realistic interview simulations.",
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -26,7 +28,9 @@ export default function RootLayout({
           "min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 font-sans antialiased",
         )}
       >
-        {children}
+        <Providers>
+          <ClientSidebar>{children}</ClientSidebar>
+        </Providers>
       </body>
     </html>
   )
