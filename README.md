@@ -102,7 +102,7 @@ Click **Deploy Site**. Once finished, Netlify will provide you with a `.netlify.
 
 ## Local Development
 
-1. **Clone the repo**: `git clone <repo-url>`
+1. **Clone the repo**: `git clone -b dev <repo-url>`
 2. **Backend**:
    - `cd V-Interview-Backend`
    - Create a `.env` file with your local settings.
