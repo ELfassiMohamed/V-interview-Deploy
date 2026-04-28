@@ -39,7 +39,7 @@ export default function Dashboard() {
     if (isAuthenticated) {
       getUserEntries()
         .then((res) => setRecentEntries(res.entries.slice(0, 3)))
-        .catch(() => {}) // silently fail for recent entries
+        .catch(() => { }) // silently fail for recent entries
     }
   }, [isAuthenticated])
 
@@ -378,101 +378,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-purple-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
-              <CardTitle className="text-purple-900">Resume Preview</CardTitle>
-              <CardDescription>Information extracted from your resume</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center text-purple-600 py-8">
-                <FileText className="h-12 w-12 mx-auto mb-2" />
-                <p>Upload your resume to see the preview</p>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="border-blue-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
-              <CardTitle className="text-blue-900">Previous Simulations</CardTitle>
-              <CardDescription>Continue where you left off</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recentEntries.length > 0 ? (
-                <div className="space-y-3">
-                  {recentEntries.map((entry) => (
-                    <div
-                      key={entry.entryID}
-                      className="flex items-center justify-between p-3 rounded-lg bg-blue-50/50 hover:bg-blue-50 transition-colors"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-blue-900">{entry.jobTitle}</p>
-                        <p className="text-xs text-blue-600 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(entry.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <span className="text-xs text-blue-500">{entry.questionCount} questions</span>
-                    </div>
-                  ))}
-                  <Link href="/history">
-                    <Button variant="link" className="mt-2 text-blue-600 hover:text-blue-700 w-full">
-                      View all history
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="text-center text-blue-600 py-8">
-                  <p>No recent simulations found</p>
-                  <Link href="/history">
-                    <Button variant="link" className="mt-2 text-blue-600 hover:text-blue-700">
-                      View all history
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/profile">
-            <Card className="border-cyan-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <div className="h-12 w-12 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-cyan-900">Manage Profile</h3>
-                <p className="text-sm text-cyan-600">Update your information</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/history">
-            <Card className="border-purple-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <div className="h-12 w-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-purple-900">View History</h3>
-                <p className="text-sm text-purple-600">See past interviews</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/results">
-            <Card className="border-blue-100 bg-white/80 backdrop-blur-md shadow-lg hover:shadow-xl transition-all cursor-pointer group">
-              <CardContent className="p-6 text-center">
-                <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-blue-900">Latest Results</h3>
-                <p className="text-sm text-blue-600">View your performance</p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
       </div>
     </div>
   )
