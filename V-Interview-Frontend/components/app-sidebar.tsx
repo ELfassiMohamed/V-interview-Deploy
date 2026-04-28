@@ -1,19 +1,11 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, FileText, History, Settings, User, LogOut, X, Brain } from "lucide-react"
+import { useState, useEffect } from "react"
+import { BarChart3, History, User, LogOut, ChevronLeft, ChevronRight, Brain, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth-context"
-
-const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "New Interview", href: "/", icon: FileText },
-  { name: "History", href: "/history", icon: History },
-  { name: "Profile", href: "/profile", icon: User },
-  { name: "Settings", href: "/settings", icon: Settings },
-]
 
 interface AppSidebarProps {
   isOpen: boolean
@@ -22,105 +14,136 @@ interface AppSidebarProps {
 
 export function AppSidebar({ isOpen, onToggle }: AppSidebarProps) {
   const pathname = usePathname()
-  const { user, logout, isAuthenticated } = useAuth()
+  const { logout } = useAuth()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
-  const userInitials = user
-    ? (user.first_name && user.last_name
-        ? `${user.first_name[0]}${user.last_name[0]}`
-        : user.username.substring(0, 2)
-      ).toUpperCase()
-    : "??"
+  // Sync collapsed state with screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(false)
+      }
+    }
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
-  const displayName = user
-    ? user.first_name && user.last_name
-      ? `${user.first_name} ${user.last_name}`
-      : user.username
-    : "Guest"
+  const navItems = [
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Profile", href: "/profile", icon: User },
+    { name: "History", href: "/history", icon: History },
+  ]
 
-  const displayEmail = user?.email || ""
+  const toggleCollapsed = () => setIsCollapsed(!isCollapsed)
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onToggle} />}
+      {/* Mobile Toggle Button (Visible when sidebar is closed on mobile) */}
+      {!isOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggle}
+          className="fixed top-4 left-4 z-[60] md:hidden bg-white shadow-md rounded-lg"
+        >
+          <Menu className="h-5 w-5 text-purple-600" />
+        </Button>
+      )}
 
-      {/* Sidebar */}
-      <div
+      {/* Sidebar Container */}
+      <aside
         className={cn(
-          "fixed left-0 top-0 z-50 h-full w-64 bg-white border-r transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full",
+          "fixed top-0 left-0 z-50 h-[calc(100vh-32px)] m-4 bg-white border border-gray-100 shadow-xl rounded-2xl transition-all duration-400 ease-in-out flex flex-col",
+          isCollapsed ? "w-[85px]" : "w-[270px]",
+          // Mobile visibility
+          isOpen ? "translate-x-0" : "-translate-x-[calc(100%+32px)] md:translate-x-0",
+          // Layout context
+          "md:sticky"
         )}
       >
-        <div className="flex h-full flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                <Brain className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                VInterview
-              </span>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={onToggle} className="md:hidden">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+        {/* Header */}
+        <header className="relative flex items-center justify-between p-6 h-24">
+          <Link href="/" className={cn("flex items-center gap-3 transition-opacity duration-300", isCollapsed && "opacity-0 pointer-events-none")}>
+            <div className="h-10 w-10 min-w-[40px] bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent whitespace-nowrap">
+              VInterview
+            </span>
+          </Link>
 
-          {/* Navigation */}
-          <div className="flex-1 px-3 py-4">
-            <div className="space-y-1">
-              {navItems.map((item) => (
+          {/* Desktop Toggler */}
+          <button
+            onClick={toggleCollapsed}
+            className={cn(
+              "hidden md:flex absolute items-center justify-center h-9 w-9 bg-purple-50 text-purple-600 rounded-lg border border-purple-100 hover:bg-purple-100 transition-all duration-400",
+              isCollapsed ? "left-1/2 -translate-x-1/2 top-[70px]" : "right-6"
+            )}
+          >
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          </button>
+
+          {/* Mobile Close Toggler */}
+          <Button variant="ghost" size="icon" onClick={onToggle} className="md:hidden">
+            <ChevronLeft className="h-5 w-5 text-gray-500" />
+          </Button>
+        </header>
+
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col justify-between py-4">
+          {/* Primary Nav */}
+          <ul className="px-4 space-y-2">
+            {navItems.map((item) => (
+              <li key={item.href} className="group relative">
                 <Link
-                  key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-purple-50 hover:text-purple-700",
+                    "flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300",
                     pathname === item.href
-                      ? "bg-gradient-to-r from-purple-50 to-blue-50 text-purple-700 border-r-2 border-purple-600"
-                      : "text-gray-700",
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-100"
+                      : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
                   )}
                   onClick={() => {
-                    // Close sidebar on mobile when clicking a link
-                    if (window.innerWidth < 768) {
-                      onToggle()
-                    }
+                    if (window.innerWidth < 768) onToggle()
                   }}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon className="h-5 w-5 min-w-[20px]" />
+                  <span className={cn("font-medium transition-opacity duration-300", isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100")}>
+                    {item.name}
+                  </span>
                 </Link>
-              ))}
-            </div>
-          </div>
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <span className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 whitespace-nowrap z-[70]">
+                    {item.name}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
 
-          {/* User Profile */}
-          <div className="p-4 border-t">
-            <div className="flex items-center justify-between rounded-lg border p-3 bg-gradient-to-r from-purple-50 to-blue-50">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32" alt={displayName} />
-                  <AvatarFallback className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs">
-                    {userInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{displayName}</p>
-                  <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-gray-500 hover:text-red-600"
+          {/* Secondary Nav */}
+          <ul className="px-4 pb-4 space-y-2">
+            <li className="group relative">
+              <button
                 onClick={logout}
+                className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all duration-300"
               >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+                <LogOut className="h-5 w-5 min-w-[20px]" />
+                <span className={cn("font-medium transition-opacity duration-300", isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100")}>
+                  Logout
+                </span>
+              </button>
+              {isCollapsed && (
+                <span className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-300 whitespace-nowrap z-[70]">
+                  Logout
+                </span>
+              )}
+            </li>
+          </ul>
+        </nav>
+      </aside>
     </>
   )
 }
+
