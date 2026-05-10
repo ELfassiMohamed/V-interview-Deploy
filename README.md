@@ -16,13 +16,6 @@ This project is an excellent learning resource for developers interested in:
 
 ---
 
-## Branch Structure
-
-- **`main`**: The "Production" branch. Use this for stable deployment to Render and Netlify.
-- **`dev`**: The "Development" branch. Use this for local coding, testing new features, and debugging before merging to `main`.
-
----
-
 ## Deployment Guide
 
 ### Phase 1: Deploy Backend & Database (Render.com)
