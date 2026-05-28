@@ -26,6 +26,7 @@ class InterviewEntries(models.Model):
     certifications = models.JSONField(default=list)
     preferred_technologies = models.JSONField(default=list)
     soft_skills = models.JSONField(default=list)
+    job_description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
