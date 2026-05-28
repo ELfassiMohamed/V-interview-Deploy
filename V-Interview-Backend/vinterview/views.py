@@ -147,7 +147,8 @@ def generate_interview_questions(request):
             'position_type': request.data.get('positionType'),
             'certifications': request.data.get('certifications', []),
             'preferred_technologies': request.data.get('preferredTechnologies', []),
-            'soft_skills': request.data.get('softSkills', [])
+            'soft_skills': request.data.get('softSkills', []),
+            'job_description': request.data.get('jobDescription')
         }
         
         # Create entry for the authenticated user
@@ -210,6 +211,7 @@ def get_user_entries(request):
                 'jobTitle': entry.job_title,
                 'experienceLevel': entry.experience_level,
                 'industry': entry.industry,
+                'jobDescription': entry.job_description,
                 'createdAt': entry.created_at,
                 'questionCount': entry.question_set.count()
             })

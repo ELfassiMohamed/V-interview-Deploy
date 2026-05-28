@@ -1,18 +1,21 @@
-import google.generativeai as genai
+from google import genai
 from django.conf import settings
 import json
 import re
 
 class GeminiService:
     def __init__(self):
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-3-flash-preview')
+        self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        self.model_name = 'gemini-3.5-flash'
     
     def generate_questions(self, interview_entries):
         prompt = self._build_prompt(interview_entries)
         
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+            )
             questions = self._parse_questions(response.text)
             return questions
         except Exception as e:
@@ -25,7 +28,10 @@ class GeminiService:
         prompt = self._build_evaluation_prompt(qa_pairs, candidate_profile)
         
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+            )
             evaluation = self._parse_evaluation(response.text)
             return evaluation
         except Exception as e:
@@ -35,6 +41,8 @@ class GeminiService:
         skills_str = ', '.join(entries.skills) if entries.skills else 'General'
         certs_str = ', '.join(entries.certifications) if entries.certifications else 'None'
         tech_str = ', '.join(entries.preferred_technologies) if entries.preferred_technologies else 'General'
+        
+        job_desc_str = f"\n        Job Description: {entries.job_description}" if getattr(entries, 'job_description', None) else ""
         
         prompt = f"""
         Generate exactly 10 technical interview questions for the following profile:
@@ -46,7 +54,7 @@ class GeminiService:
         Language: {entries.language}
         Position Type: {entries.position_type}
         Certifications: {certs_str}
-        Preferred Technologies: {tech_str}
+        Preferred Technologies: {tech_str}{job_desc_str}
         
         Requirements:
         1. Generate exactly 10 questions
