@@ -5,13 +5,28 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
-from .serializers import UserSignUpSerializer, UserSignInSerializer, UserProfileSerializer
+from .serializers import (
+    UserSignUpSerializer, UserSignInSerializer, UserProfileSerializer,
+    AuthResponseSerializer, MessageResponseSerializer, InterviewEntryCreateSerializer,
+    InterviewEntryCreateResponseSerializer, InterviewEntryListResponseSerializer,
+    SubmitAnswersRequestSerializer, SubmitAnswersResponseSerializer,
+    GetInterviewResultsResponseSerializer, GetInterviewHistoryResponseSerializer
+)
 from .models import User, InterviewEntries, Question, Answer, InterviewResult
 from .services.gemini_service import GeminiService
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 import logging
 
-@extend_schema(request=UserSignUpSerializer, responses={201: OpenApiResponse(description="User created successfully")})
+@extend_schema(
+    summary="User Registration",
+    description="Registers a new candidate user and returns an authentication token.",
+    request=UserSignUpSerializer,
+    responses={
+        201: OpenApiResponse(response=AuthResponseSerializer, description="User registered and logged in successfully."),
+        400: OpenApiResponse(description="Validation error (e.g. email already exists, passwords do not match).")
+    },
+    tags=["Authentication"]
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def sign_up(request):
@@ -35,7 +50,16 @@ def sign_up(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(request=UserSignInSerializer, responses={200: OpenApiResponse(description="Login successful")})
+@extend_schema(
+    summary="User Login",
+    description="Authenticates candidate credentials and returns a secure token.",
+    request=UserSignInSerializer,
+    responses={
+        200: OpenApiResponse(response=AuthResponseSerializer, description="Login successful."),
+        401: OpenApiResponse(description="Invalid credentials or disabled account.")
+    },
+    tags=["Authentication"]
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def sign_in(request):
@@ -60,7 +84,15 @@ def sign_in(request):
     
     return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 
-@extend_schema(responses={200: OpenApiResponse(description="Logout successful")})
+@extend_schema(
+    summary="User Logout",
+    description="Revokes the user's active session token.",
+    responses={
+        200: OpenApiResponse(response=MessageResponseSerializer, description="Successfully logged out and token deleted."),
+        400: OpenApiResponse(description="Failed to log out (invalid token / missing authorization).")
+    },
+    tags=["Authentication"]
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sign_out(request):
@@ -79,7 +111,14 @@ def sign_out(request):
             'error': 'Something went wrong during logout'
         }, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(responses=UserProfileSerializer)
+@extend_schema(
+    summary="Get User Profile",
+    description="Retrieves the profile information of the currently authenticated candidate.",
+    responses={
+        200: OpenApiResponse(response=UserProfileSerializer, description="Profile information retrieved successfully.")
+    },
+    tags=["Interview Profile"]
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_profile(request):
@@ -89,7 +128,16 @@ def get_profile(request):
     serializer = UserProfileSerializer(request.user)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-@extend_schema(request=UserProfileSerializer, responses=UserProfileSerializer)
+@extend_schema(
+    summary="Update User Profile",
+    description="Updates the profile details of the authenticated candidate.",
+    request=UserProfileSerializer,
+    responses={
+        200: OpenApiResponse(response=UserProfileSerializer, description="Profile updated successfully."),
+        400: OpenApiResponse(description="Validation error on input fields.")
+    },
+    tags=["Interview Profile"]
+)
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
@@ -106,7 +154,14 @@ def update_profile(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@extend_schema(responses={200: OpenApiResponse(description="Profile deleted successfully")})
+@extend_schema(
+    summary="Delete User Profile",
+    description="Deletes the authenticated candidate account and all associated data permanently.",
+    responses={
+        200: OpenApiResponse(response=MessageResponseSerializer, description="Account deleted successfully.")
+    },
+    tags=["Interview Profile"]
+)
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_profile(request):
@@ -123,6 +178,17 @@ def delete_profile(request):
 
 logger = logging.getLogger(__name__)
 
+@extend_schema(
+    summary="Generate Interview Questions",
+    description="Creates a new interview session and uses Gemini AI to generate 10 tailored technical/behavioral questions.",
+    request=InterviewEntryCreateSerializer,
+    responses={
+        201: OpenApiResponse(response=InterviewEntryCreateResponseSerializer, description="Interview session created and questions generated successfully."),
+        400: OpenApiResponse(description="Bad request due to missing fields or validation failure."),
+        500: OpenApiResponse(description="Internal server error / AI service failure.")
+    },
+    tags=["Interview Flow"]
+)
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -196,6 +262,15 @@ def generate_interview_questions(request):
             'error': f'An error occurred: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@extend_schema(
+    summary="Get User Interview Sessions",
+    description="Retrieves a list of all past generated interview sessions for the authenticated user, excluding complete scores/evaluation details.",
+    responses={
+        200: OpenApiResponse(response=InterviewEntryListResponseSerializer, description="List of interview sessions retrieved successfully."),
+        500: OpenApiResponse(description="Internal server error.")
+    },
+    tags=["Interview History"]
+)
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
