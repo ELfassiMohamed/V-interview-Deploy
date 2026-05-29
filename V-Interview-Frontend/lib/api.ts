@@ -89,6 +89,7 @@ export interface GenerateQuestionsPayload {
   certifications: string[];
   preferredTechnologies: string[];
   softSkills: string[];
+  jobDescription: string;
 }
 
 export interface GeneratedQuestion {

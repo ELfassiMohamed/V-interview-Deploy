@@ -1,15 +1,127 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, type KeyboardEvent } from "react"
+import { useEffect, useState, type KeyboardEvent } from "react"
+import { ArrowRight, FileText, Loader2, Sparkles, X } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { FileText, Sparkles, ArrowRight, Loader2, Clock } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth-context"
-import { generateQuestions, getUserEntries, type UserEntry } from "@/lib/api"
+import { generateQuestions, getUserEntries } from "@/lib/api"
+
+type TokenFieldProps = {
+  id: string
+  label: string
+  values: string[]
+  setValues: React.Dispatch<React.SetStateAction<string[]>>
+  inputValue: string
+  setInputValue: React.Dispatch<React.SetStateAction<string>>
+  placeholder: string
+  tagClassName: string
+  removeClassName: string
+}
+
+function TokenField({
+  id,
+  label,
+  values,
+  setValues,
+  inputValue,
+  setInputValue,
+  placeholder,
+  tagClassName,
+  removeClassName,
+}: TokenFieldProps) {
+  const addTokens = (rawValue: string) => {
+    const tokens = rawValue
+      .split(/[,\n]/)
+      .map((token) => token.trim())
+      .filter(Boolean)
+
+    if (tokens.length) {
+      setValues((currentValues) => {
+        const seen = new Set(currentValues.map((value) => value.toLowerCase()))
+        const nextValues = [...currentValues]
+
+        tokens.forEach((token) => {
+          const normalizedToken = token.toLowerCase()
+
+          if (!seen.has(normalizedToken)) {
+            seen.add(normalizedToken)
+            nextValues.push(token)
+          }
+        })
+
+        return nextValues
+      })
+    }
+
+    setInputValue("")
+  }
+
+  const removeToken = (value: string) => {
+    setValues((currentValues) => currentValues.filter((item) => item !== value))
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault()
+      addTokens(inputValue)
+      return
+    }
+
+    if (e.key === "Backspace" && !inputValue && values.length) {
+      setValues((currentValues) => currentValues.slice(0, -1))
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text")
+
+    if (/[,;\n]/.test(pastedText)) {
+      e.preventDefault()
+      addTokens(pastedText.replace(/;/g, ","))
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-sm font-medium text-purple-900">
+        {label}
+      </label>
+      <div className="flex min-h-[46px] flex-wrap items-center gap-2 rounded-md border border-purple-200 bg-white px-3 py-2 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-200">
+        {values.map((value) => (
+          <span
+            key={value}
+            className={`inline-flex max-w-full items-center gap-1 rounded-full px-3 py-1 text-sm ${tagClassName}`}
+          >
+            <span className="truncate">{value}</span>
+            <button
+              type="button"
+              aria-label={`Remove ${value}`}
+              className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${removeClassName}`}
+              onClick={() => removeToken(value)}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <input
+          id={id}
+          value={inputValue}
+          onBlur={() => addTokens(inputValue)}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          placeholder={values.length ? "" : placeholder}
+          className="min-w-[140px] flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-gray-400"
+        />
+      </div>
+    </div>
+  )
+}
 
 export default function Dashboard() {
   const router = useRouter()
@@ -18,6 +130,7 @@ export default function Dashboard() {
   // Form state
   const [jobTitle, setJobTitle] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("Mid-level")
+  const [jobDescription, setJobDescription] = useState("")
   const [skills, setSkills] = useState<string[]>([])
   const [skillInput, setSkillInput] = useState("")
   const [industry, setIndustry] = useState("Technology")
@@ -32,46 +145,13 @@ export default function Dashboard() {
   // API state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [recentEntries, setRecentEntries] = useState<UserEntry[]>([])
 
   // Fetch recent entries on mount
   useEffect(() => {
     if (isAuthenticated) {
-      getUserEntries()
-        .then((res) => setRecentEntries(res.entries.slice(0, 3)))
-        .catch(() => { }) // silently fail for recent entries
+      getUserEntries().catch(() => {}) // silently fail for recent entries
     }
   }, [isAuthenticated])
-
-  const addTag = (
-    value: string,
-    list: string[],
-    setter: (v: string[]) => void,
-    inputSetter: (v: string) => void
-  ) => {
-    const trimmed = value.trim()
-    if (trimmed && !list.includes(trimmed)) {
-      setter([...list, trimmed])
-    }
-    inputSetter("")
-  }
-
-  const removeTag = (value: string, list: string[], setter: (v: string[]) => void) => {
-    setter(list.filter((item) => item !== value))
-  }
-
-  const handleTagKeyDown = (
-    e: KeyboardEvent<HTMLInputElement>,
-    value: string,
-    list: string[],
-    setter: (v: string[]) => void,
-    inputSetter: (v: string) => void
-  ) => {
-    if (e.key === "Enter") {
-      e.preventDefault()
-      addTag(value, list, setter, inputSetter)
-    }
-  }
 
   const handleStartInterview = async () => {
     if (!jobTitle.trim()) {
@@ -86,13 +166,14 @@ export default function Dashboard() {
       const response = await generateQuestions({
         jobTitle,
         experienceLevel,
-        skills,
         industry,
         language,
         positionType,
-        certifications: certifications ? certifications.split(",").map((c) => c.trim()) : [],
+        skills,
+        certifications: certifications ? certifications.split(",").map((c) => c.trim()).filter(Boolean) : [],
         preferredTechnologies,
         softSkills,
+        jobDescription,
       })
 
       // Store questions in sessionStorage for the interview page
@@ -115,30 +196,29 @@ export default function Dashboard() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
+      <div className="flex h-full min-h-[400px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 relative">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-transparent">
+    <div className="container relative mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-8 text-center">
+          <h1 className="mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
             Virtual Interview Simulator
           </h1>
-          <p className="text-gray-600 text-lg">Prepare for your next job interview with our AI-powered simulation</p>
+          <p className="text-lg text-gray-600">Prepare for your next job interview with our AI-powered simulation</p>
         </div>
 
-        {/* Error Banner */}
         {error && (
-          <div className="mb-6 flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
             <span>{error}</span>
           </div>
         )}
 
-        <Card className="mb-8 border-purple-100 bg-white/80 backdrop-blur-md shadow-xl">
+        <Card className="mb-8 border-purple-100 bg-white/80 shadow-xl backdrop-blur-md">
           <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
             <CardTitle className="flex items-center text-purple-900">
               <Sparkles className="mr-2 h-5 w-5" />
@@ -148,14 +228,14 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="job-title" className="text-sm font-medium text-purple-900">
                     Job Title *
                   </label>
                   <Input
                     id="job-title"
-                    placeholder="e.g. Front End Dev"
+                    placeholder="e.g. Full Stack Python Developer"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     className="border-purple-200 focus:border-purple-400 focus:ring-purple-200"
@@ -169,7 +249,7 @@ export default function Dashboard() {
                     id="experience-level"
                     value={experienceLevel}
                     onChange={(e) => setExperienceLevel(e.target.value)}
-                    className="w-full h-10 px-3 py-2 rounded-md border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                    className="h-10 w-full rounded-md border border-purple-200 px-3 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
                   >
                     <option value="Entry-level">Entry-level</option>
                     <option value="Mid-level">Mid-level</option>
@@ -179,37 +259,19 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="skills" className="text-sm font-medium text-purple-900">
-                  Skills
-                </label>
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md border-purple-200 bg-white min-h-[44px]">
-                  {skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-full text-xs sm:text-sm flex items-center whitespace-nowrap"
-                    >
-                      {skill}
-                      <button
-                        className="ml-1 sm:ml-1.5 text-purple-500 hover:text-purple-700 text-sm"
-                        onClick={() => removeTag(skill, skills, setSkills)}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <Input
-                    id="skills"
-                    placeholder="Add a skill and press Enter..."
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={(e) => handleTagKeyDown(e, skillInput, skills, setSkills, setSkillInput)}
-                    className="border-0 focus:ring-0 flex-1 min-w-[100px] sm:min-w-[120px] text-sm"
-                  />
-                </div>
-              </div>
+              <TokenField
+                id="skills"
+                label="Skills"
+                values={skills}
+                setValues={setSkills}
+                inputValue={skillInput}
+                setInputValue={setSkillInput}
+                placeholder="Add a skill and press Enter..."
+                tagClassName="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700"
+                removeClassName="text-purple-500 hover:bg-purple-200 hover:text-purple-700"
+              />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="industry" className="text-sm font-medium text-purple-900">
                     Industry
@@ -218,7 +280,7 @@ export default function Dashboard() {
                     id="industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    className="w-full h-10 px-3 py-2 rounded-md border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                    className="h-10 w-full rounded-md border border-purple-200 px-3 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
                   >
                     <option value="Technology">Technology</option>
                     <option value="Healthcare">Healthcare</option>
@@ -241,7 +303,7 @@ export default function Dashboard() {
                     id="language"
                     value={language}
                     onChange={(e) => setLanguage(e.target.value)}
-                    className="w-full h-10 px-3 py-2 rounded-md border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                    className="h-10 w-full rounded-md border border-purple-200 px-3 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
                   >
                     <option value="English">English</option>
                     <option value="Spanish">Spanish</option>
@@ -258,7 +320,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="position-type" className="text-sm font-medium text-purple-900">
                     Position Type
@@ -267,12 +329,13 @@ export default function Dashboard() {
                     id="position-type"
                     value={positionType}
                     onChange={(e) => setPositionType(e.target.value)}
-                    className="w-full h-10 px-3 py-2 rounded-md border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                    className="h-10 w-full rounded-md border border-purple-200 px-3 py-2 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200"
                   >
                     <option value="Full-time">Full-time</option>
                     <option value="Part-time">Part-time</option>
                     <option value="Contract">Contract</option>
                     <option value="Freelance">Freelance</option>
+                    <option value="Remote">Remote</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -281,7 +344,7 @@ export default function Dashboard() {
                   </label>
                   <Input
                     id="certifications"
-                    placeholder="e.g. AWS, Google Cloud"
+                    placeholder="e.g. AWS Certified Cloud Practitioner"
                     value={certifications}
                     onChange={(e) => setCertifications(e.target.value)}
                     className="border-purple-200 focus:border-purple-400 focus:ring-purple-200"
@@ -290,73 +353,46 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="preferred-technologies" className="text-sm font-medium text-purple-900">
-                  Preferred Technologies
+                <label htmlFor="job-description" className="text-sm font-medium text-purple-900">
+                  Job Description
                 </label>
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md border-purple-200 bg-white min-h-[44px]">
-                  {preferredTechnologies.map((tech) => (
-                    <span
-                      key={tech}
-                      className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700 rounded-full text-xs sm:text-sm flex items-center whitespace-nowrap"
-                    >
-                      {tech}
-                      <button
-                        className="ml-1 sm:ml-1.5 text-blue-500 hover:text-blue-700 text-sm"
-                        onClick={() => removeTag(tech, preferredTechnologies, setPreferredTechnologies)}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <Input
-                    id="preferred-technologies"
-                    placeholder="Add a technology and press Enter..."
-                    value={techInput}
-                    onChange={(e) => setTechInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      handleTagKeyDown(e, techInput, preferredTechnologies, setPreferredTechnologies, setTechInput)
-                    }
-                    className="border-0 focus:ring-0 flex-1 min-w-[100px] sm:min-w-[120px] text-sm"
-                  />
-                </div>
+                <Textarea
+                  id="job-description"
+                  placeholder="Describe the role, responsibilities, stack, and interview focus..."
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  className="min-h-[120px] resize-y border-purple-200 focus:border-purple-400 focus:ring-purple-200"
+                />
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="soft-skills" className="text-sm font-medium text-purple-900">
-                  Soft Skills
-                </label>
-                <div className="flex flex-wrap gap-2 p-3 border rounded-md border-purple-200 bg-white min-h-[44px]">
-                  {softSkills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-1 sm:px-3 sm:py-1 bg-gradient-to-r from-cyan-100 to-purple-100 text-cyan-700 rounded-full text-xs sm:text-sm flex items-center whitespace-nowrap"
-                    >
-                      {skill}
-                      <button
-                        className="ml-1 sm:ml-1.5 text-cyan-500 hover:text-cyan-700 text-sm"
-                        onClick={() => removeTag(skill, softSkills, setSoftSkills)}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  <Input
-                    id="soft-skills"
-                    placeholder="Add a soft skill and press Enter..."
-                    value={softSkillInput}
-                    onChange={(e) => setSoftSkillInput(e.target.value)}
-                    onKeyDown={(e) =>
-                      handleTagKeyDown(e, softSkillInput, softSkills, setSoftSkills, setSoftSkillInput)
-                    }
-                    className="border-0 focus:ring-0 flex-1 min-w-[100px] sm:min-w-[120px] text-sm"
-                  />
-                </div>
-              </div>
+              <TokenField
+                id="preferred-technologies"
+                label="Preferred Technologies"
+                values={preferredTechnologies}
+                setValues={setPreferredTechnologies}
+                inputValue={techInput}
+                setInputValue={setTechInput}
+                placeholder="Add a technology and press Enter..."
+                tagClassName="bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-700"
+                removeClassName="text-blue-500 hover:bg-blue-200 hover:text-blue-700"
+              />
+
+              <TokenField
+                id="soft-skills"
+                label="Soft Skills"
+                values={softSkills}
+                setValues={setSoftSkills}
+                inputValue={softSkillInput}
+                setInputValue={setSoftSkillInput}
+                placeholder="Add a soft skill and press Enter..."
+                tagClassName="bg-gradient-to-r from-cyan-100 to-purple-100 text-cyan-700"
+                removeClassName="text-cyan-500 hover:bg-cyan-200 hover:text-cyan-700"
+              />
 
               <div className="pt-4">
                 <Button
                   size="lg"
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-xl"
                   onClick={handleStartInterview}
                   disabled={isSubmitting}
                 >
@@ -377,8 +413,6 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
-
       </div>
     </div>
   )

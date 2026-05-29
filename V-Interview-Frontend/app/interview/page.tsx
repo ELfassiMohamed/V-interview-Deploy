@@ -1,14 +1,22 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, Suspense } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { ArrowRight, Send, Mic, MicOff, Volume2, Loader2 } from "lucide-react"
+import { Suspense, useEffect, useRef, useState } from "react"
+import {
+  ArrowRight,
+  BrainCircuit,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  Mic,
+  MicOff,
+  Send,
+  UserRound,
+} from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { submitAnswers, type GeneratedQuestion, type SubmitAnswerItem } from "@/lib/api"
 
 // Speech Recognition types
@@ -53,7 +61,13 @@ interface CollectedAnswer {
 
 export default function InterviewPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-full min-h-[400px]"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-full min-h-[400px] items-center justify-center bg-[#f7f9fb]">
+          <Loader2 className="h-8 w-8 animate-spin text-[#3525cd]" />
+        </div>
+      }
+    >
       <InterviewPageInner />
     </Suspense>
   )
@@ -86,6 +100,8 @@ function InterviewPageInner() {
   const chatEndRef = useRef<HTMLDivElement | null>(null)
 
   const totalQuestions = questions.length
+  const currentQuestion = questions[currentQuestionIndex]
+  const progressValue = totalQuestions ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0
 
   // Load interview data from session storage
   useEffect(() => {
@@ -226,7 +242,7 @@ function InterviewPageInner() {
         speakText(nextQ.questionText)
       }, 500)
     } else {
-      // All questions answered — submit to backend
+      // All questions answered - submit to backend
       setIsSubmitting(true)
 
       const submitData: SubmitAnswerItem[] = updatedAnswers.map((a) => ({
@@ -262,147 +278,214 @@ function InterviewPageInner() {
 
   if (questions.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+      <div className="flex h-full min-h-[400px] items-center justify-center bg-[#f7f9fb]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#3525cd]" />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 relative flex flex-col h-full">
-      <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            {jobTitle} Interview
-          </h1>
-          <div className="text-sm text-purple-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-md border border-purple-100 shadow-sm">
-            Question {Math.min(currentQuestionIndex + 1, totalQuestions)} of {totalQuestions}
+    <main className="h-screen overflow-hidden bg-[linear-gradient(135deg,#f7f9fb_0%,#f2f4f6_45%,#eceef0_100%)] p-3 text-[#191c1e] md:p-4">
+      <div className="mx-auto flex h-full w-full max-w-[1280px] flex-col gap-3">
+        <header className="shrink-0 rounded-2xl border border-white/70 bg-white/80 px-4 py-3 shadow-[0_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-xl">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#4d44e3]">Live Interview Session</p>
+              <h1 className="mt-0.5 truncate text-xl font-bold tracking-tight text-[#191c1e] md:text-2xl">{jobTitle}</h1>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-full border border-[#c7c4d8] bg-white/70 px-3 py-1.5 text-xs font-semibold text-[#3323cc]">
+                Question {Math.min(currentQuestionIndex + 1, totalQuestions)} of {totalQuestions}
+              </div>
+              <div className="rounded-full bg-[#e2dfff] px-3 py-1.5 text-xs font-semibold text-[#0f0069]">
+                {currentQuestion?.difficulty || "Focused"}
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="mb-6">
-          <Progress value={((currentQuestionIndex + 1) / totalQuestions) * 100} className="h-3 bg-white/50" />
-        </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e0e3e5]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#3525cd] via-[#4f46e5] to-[#8a4cfc] transition-all duration-500"
+              style={{ width: `${progressValue}%` }}
+            />
+          </div>
+        </header>
 
-        <Card className="flex-1 flex flex-col overflow-hidden border-purple-200 bg-white/80 backdrop-blur-md shadow-xl min-h-[500px]">
-          <CardContent className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`flex max-w-[80%] ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                  <Avatar className={`h-10 w-10 ${message.role === "user" ? "ml-3" : "mr-3"}`}>
-                    <AvatarFallback
-                      className={
-                        message.role === "user"
-                          ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
-                          : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
-                      }
-                    >
-                      {message.role === "user" ? "U" : "AI"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div
-                    className={`rounded-2xl p-4 shadow-lg ${
-                      message.role === "user"
-                        ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
-                        : "bg-white border border-purple-100"
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{message.content}</p>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className={`text-xs ${message.role === "user" ? "text-white/70" : "text-gray-500"}`}>
+        <section className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.8fr)]">
+          <div className="flex min-h-0 flex-col gap-3">
+            <div className="relative flex-1 overflow-hidden rounded-3xl border border-white/60 bg-[#191c1e] shadow-[0_24px_60px_rgba(25,28,30,0.22)]">
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(53,37,205,0.85),rgba(5,85,221,0.5)_42%,rgba(25,28,30,0.95))]" />
+              <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] [background-size:44px_44px]" />
+
+              <div className="relative flex h-full min-h-0 flex-col justify-between p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-semibold text-white shadow-lg backdrop-blur-xl">
+                    AI Technical Lead
+                  </div>
+                  <div className="aspect-video w-32 overflow-hidden rounded-2xl border border-white/30 bg-white/15 shadow-xl backdrop-blur-xl sm:w-40">
+                    <div className="flex h-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-white/30 to-white/5 text-white">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                        <UserRound className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs font-semibold">Candidate</p>
+                      <div className="flex h-4 items-end gap-1">
+                        {[0, 1, 2, 3].map((bar) => (
+                          <span
+                            key={bar}
+                            className={`w-1 rounded-full bg-white ${isListening ? "animate-pulse" : ""}`}
+                            style={{ height: `${6 + bar * 3}px` }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center text-white">
+                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border border-white/30 bg-white/15 shadow-2xl backdrop-blur-xl">
+                    <BrainCircuit className="h-8 w-8" />
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#dad7ff]">Current Question</p>
+                  <h2 className="mt-3 line-clamp-4 text-xl font-bold leading-tight tracking-tight md:text-3xl">
+                    {currentQuestion?.questionText}
+                  </h2>
+                </div>
+
+                <div className="rounded-2xl border border-white/30 bg-white/85 p-3 shadow-[0_10px_30px_rgba(79,70,229,0.12)] backdrop-blur-xl">
+                  {isSubmitting ? (
+                    <div className="mt-3 flex items-center justify-center gap-3 rounded-xl bg-[#e2dfff] px-4 py-2.5 text-sm font-semibold text-[#3323cc]">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Submitting your answers...
+                    </div>
+                  ) : (
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                      {isSupported && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={isListening ? stopListening : startListening}
+                          disabled={currentQuestionIndex >= totalQuestions}
+                          className={`h-11 rounded-xl border-[#c7c4d8] ${
+                            isListening ? "bg-[#ffdad6] text-[#93000a] hover:bg-[#ffdad6]" : "bg-white/70 text-[#3525cd] hover:bg-[#e2dfff]"
+                          }`}
+                        >
+                          {isListening ? <MicOff className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
+                          {isListening ? "Stop listening" : "Start listening"}
+                        </Button>
+                      )}
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!input.trim() || currentQuestionIndex >= totalQuestions}
+                        className="h-11 flex-1 rounded-xl bg-gradient-to-r from-[#3525cd] to-[#8a4cfc] font-semibold text-white shadow-lg shadow-indigo-900/15 hover:from-[#3323cc] hover:to-[#712ae2]"
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        {currentQuestionIndex < totalQuestions - 1 ? "Submit Answer" : "Submit Final Answer"}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-auto flex max-w-fit shrink-0 items-center justify-center gap-3 rounded-full border border-white/70 bg-white/85 p-2 shadow-[0_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-xl">
+              <Button
+                type="button"
+                className="h-12 rounded-full bg-[#ba1a1a] px-6 text-sm font-bold text-white shadow-lg shadow-red-900/10 hover:bg-[#a01717]"
+                onClick={() => router.push("/dashboard")}
+              >
+                End Interview
+              </Button>
+            </div>
+          </div>
+
+          <aside className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto_minmax(0,0.7fr)] gap-3">
+            <section className="flex min-h-0 flex-col rounded-3xl border border-white/70 bg-white/80 shadow-[0_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-xl">
+              <div className="border-b border-[#c7c4d8]/50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#777587]">Answer Workspace</p>
+                    <h2 className="mt-0.5 text-lg font-semibold text-[#191c1e]">Your Answer</h2>
+                  </div>
+                  {isListening && (
+                    <span className="rounded-full bg-[#ffdad6] px-3 py-1 text-xs font-semibold text-[#93000a]">Listening</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex min-h-0 flex-1 flex-col gap-3 p-4">
+                <div className="flex shrink-0 gap-4 border-b border-[#c7c4d8]/40">
+                  <button className="border-b-2 border-[#3525cd] px-1 pb-2 text-sm font-semibold text-[#3525cd]">Text</button>
+                  <button className="px-1 pb-2 text-sm font-semibold text-[#464555]">Notes</button>
+                </div>
+
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type your answer here..."
+                  className="min-h-0 flex-1 resize-none rounded-2xl border-[#c7c4d8]/70 bg-[#f2f4f6]/80 p-4 text-sm leading-6 shadow-inner focus:border-[#3525cd] focus:ring-[#c3c0ff]"
+                  disabled={currentQuestionIndex >= totalQuestions || isSubmitting}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-[0_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#777587]">Interview Details</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#dbe1ff] text-[#003fac]">
+                    <BriefcaseBusiness className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#191c1e]">{jobTitle}</p>
+                    <p className="text-xs text-[#464555]">Role simulation</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e2dfff] text-[#3525cd]">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#191c1e]">{answers.length} answers recorded</p>
+                    <p className="text-xs text-[#464555]">Progress saved locally until submission</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eaddff] text-[#712ae2]">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#191c1e]">{Math.max(totalQuestions - currentQuestionIndex - 1, 0)} remaining</p>
+                    <p className="text-xs text-[#464555]">Questions after this prompt</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="min-h-0 overflow-y-auto rounded-3xl border border-white/70 bg-white/70 p-4 shadow-[0_10px_30px_rgba(79,70,229,0.08)] backdrop-blur-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#777587]">Conversation</p>
+              <div className="mt-3 space-y-2">
+                {messages.map((message) => (
+                  <div key={message.id} className={message.role === "user" ? "ml-6 rounded-2xl bg-[#4f46e5] p-2.5 text-white" : "mr-6 rounded-2xl border border-[#c7c4d8]/50 bg-white p-2.5"}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold uppercase tracking-[0.14em]">{message.role === "user" ? "You" : "AI"}</span>
+                      <span className={message.role === "user" ? "text-xs text-white/70" : "text-xs text-[#777587]"}>
                         {message.timestamp.toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                      </div>
-                      {message.role === "assistant" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => speakText(message.content)}
-                          className="h-6 w-6 p-0 hover:bg-purple-50 text-purple-600"
-                        >
-                          <Volume2 className="h-3 w-3" />
-                        </Button>
-                      )}
+                      </span>
                     </div>
+                    <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-xs leading-5">{message.content}</p>
                   </div>
-                </div>
+                ))}
+                <div ref={chatEndRef} />
               </div>
-            ))}
-            <div ref={chatEndRef} />
-          </CardContent>
-
-          <div className="p-6 border-t bg-gradient-to-r from-purple-50 to-blue-50">
-            {isSubmitting ? (
-              <div className="flex items-center justify-center gap-3 py-4">
-                <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
-                <span className="text-purple-700 font-medium">Submitting your answers for evaluation...</span>
-              </div>
-            ) : (
-              <>
-                <div className="flex space-x-3">
-                  <div className="flex-1 relative">
-                    <Textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Type your answer or use voice input..."
-                      className="min-h-[80px] resize-none pr-12 border-purple-200 focus:border-purple-400 focus:ring-purple-200 bg-white/80 backdrop-blur-md shadow-sm"
-                      disabled={currentQuestionIndex >= totalQuestions}
-                    />
-                    {isSupported && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className={`absolute right-2 top-2 h-8 w-8 ${
-                          isListening
-                            ? "bg-red-100 text-red-600 hover:bg-red-200"
-                            : "text-purple-600 hover:bg-purple-100"
-                        }`}
-                        onClick={isListening ? stopListening : startListening}
-                        disabled={currentQuestionIndex >= totalQuestions}
-                      >
-                        {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                      </Button>
-                    )}
-                  </div>
-                  <Button
-                    onClick={handleSendMessage}
-                    disabled={!input.trim() || currentQuestionIndex >= totalQuestions}
-                    size="icon"
-                    className="h-[80px] w-16 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 shadow-lg"
-                  >
-                    <Send className="h-6 w-6" />
-                  </Button>
-                </div>
-                <div className="mt-3 text-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSendMessage}
-                    disabled={!input.trim() || currentQuestionIndex >= totalQuestions}
-                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-100"
-                  >
-                    {currentQuestionIndex < totalQuestions - 1
-                      ? "Send and continue to next question"
-                      : "Submit final answer and see results"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-                {isSupported && (
-                  <p className="text-xs text-center text-purple-600 mt-2">
-                    {isListening
-                      ? "🎤 Listening... Click the mic to stop"
-                      : "💡 Click the mic icon to use voice input"}
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-        </Card>
+            </section>
+          </aside>
+        </section>
       </div>
-    </div>
+    </main>
   )
 }
