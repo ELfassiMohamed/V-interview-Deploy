@@ -124,6 +124,8 @@ function InterviewPageInner() {
           },
         ])
         setQuestionStartTime(Date.now())
+        // Speak the first question aloud
+        setTimeout(() => speakText(firstQ.questionText), 800)
       }
     } else {
       // No interview data, redirect to dashboard
@@ -349,6 +351,15 @@ function InterviewPageInner() {
                   <h2 className="mt-3 line-clamp-4 text-xl font-bold leading-tight tracking-tight md:text-3xl">
                     {currentQuestion?.questionText}
                   </h2>
+                  <button
+                    onClick={() => currentQuestion && speakText(currentQuestion.questionText)}
+                    className="mt-3 flex items-center gap-1.5 rounded-full border border-white/30 bg-white/15 px-4 py-1.5 text-xs font-semibold text-white/90 shadow-lg backdrop-blur-xl transition-all hover:bg-white/25 hover:text-white"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Read aloud
+                  </button>
                 </div>
 
                 <div className="rounded-2xl border border-white/30 bg-white/85 p-3 shadow-[0_10px_30px_rgba(79,70,229,0.12)] backdrop-blur-xl">
