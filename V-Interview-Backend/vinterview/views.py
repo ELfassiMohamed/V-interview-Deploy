@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from django.conf import settings
 from django.contrib.auth import login, logout
 from .serializers import (
     UserSignUpSerializer, UserSignInSerializer, UserProfileSerializer,
@@ -13,9 +14,43 @@ from .serializers import (
     GetInterviewResultsResponseSerializer, GetInterviewHistoryResponseSerializer
 )
 from .models import User, InterviewEntries, Question, Answer, InterviewResult
+from .services.base_service import BaseAIService
 from .services.gemini_service import GeminiService
+from .services.deepseek_service import DeepSeekService
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 import logging
+
+def get_ai_service(model_name: str = "gemini") -> BaseAIService:
+    services = {
+        "gemini": GeminiService,
+        "deepseek": DeepSeekService,
+    }
+    service_class = services.get(model_name)
+    if not service_class:
+        logger.warning(f"Unknown model '{model_name}', falling back to Gemini")
+        service_class = GeminiService
+    return service_class()
+
+
+def _call_ai_with_fallback(callable_fn):
+    primary = settings.PRIMARY_AI_MODEL
+    secondary = "deepseek" if primary == "gemini" else "gemini"
+    models_tried = []
+
+    for model_name in (primary, secondary):
+        try:
+            service = get_ai_service(model_name)
+            result = callable_fn(service)
+            if models_tried:
+                logger.info(f"Succeeded with fallback model '{model_name}'")
+            return result
+        except Exception as e:
+            models_tried.append(model_name)
+            logger.warning(f"Model '{model_name}' failed: {str(e)}")
+            continue
+
+    raise Exception(f"All AI models failed (tried: {', '.join(models_tried)})")
+
 
 @extend_schema(
     summary="User Registration",
@@ -180,7 +215,7 @@ logger = logging.getLogger(__name__)
 
 @extend_schema(
     summary="Generate Interview Questions",
-    description="Creates a new interview session and uses Gemini AI to generate 10 tailored technical/behavioral questions.",
+    description="Creates a new interview session and uses AI (Gemini or DeepSeek) to generate 10 tailored technical/behavioral questions.",
     request=InterviewEntryCreateSerializer,
     responses={
         201: OpenApiResponse(response=InterviewEntryCreateResponseSerializer, description="Interview session created and questions generated successfully."),
@@ -225,9 +260,10 @@ def generate_interview_questions(request):
         
         logger.info(f"Created interview entries for user {request.user.id}")
         
-        # 3. Generate questions using Gemini
-        gemini_service = GeminiService()
-        questions_data = gemini_service.generate_questions(interview_entries)
+        # 3. Generate questions using AI with automatic fallback
+        questions_data = _call_ai_with_fallback(
+            lambda s: s.generate_questions(interview_entries)
+        )
         
         # 4. Save questions to database
         questions = []
@@ -304,6 +340,18 @@ def get_user_entries(request):
         
 # THE INTERVIEW SIMULATION PART : Answers
 
+@extend_schema(
+    summary="Submit Answers for Evaluation",
+    description="Submits candidate answers for a given interview entry and returns AI-generated evaluation results.",
+    request=SubmitAnswersRequestSerializer,
+    responses={
+        201: OpenApiResponse(response=SubmitAnswersResponseSerializer, description="Answers submitted and evaluated successfully."),
+        400: OpenApiResponse(description="Validation error (e.g. missing answers, already submitted, question mismatch)."),
+        404: OpenApiResponse(description="Interview entry not found or access denied."),
+        500: OpenApiResponse(description="Internal server error or AI service failure.")
+    },
+    tags=["Interview Flow"]
+)
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -398,9 +446,10 @@ def submit_answers(request, entry_id):
             'soft_skills': interview_entry.soft_skills
         }
         
-        # 8. Call AI service for evaluation
-        gemini_service = GeminiService()
-        evaluation = gemini_service.evaluate_answers(qa_pairs, candidate_profile)
+        # 8. Call AI service for evaluation with automatic fallback
+        evaluation = _call_ai_with_fallback(
+            lambda s: s.evaluate_answers(qa_pairs, candidate_profile)
+        )
         
         # 9. Save evaluation results
         interview_result = InterviewResult.objects.create(
@@ -432,6 +481,16 @@ def submit_answers(request, entry_id):
             'error': f'An error occurred while processing your answers: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@extend_schema(
+    summary="Get Interview Results",
+    description="Retrieves the full evaluation results for a completed interview session, including scores per question.",
+    responses={
+        200: OpenApiResponse(response=GetInterviewResultsResponseSerializer, description="Interview results retrieved successfully."),
+        404: OpenApiResponse(description="Interview entry or results not found."),
+        500: OpenApiResponse(description="Internal server error.")
+    },
+    tags=["Interview Results"]
+)
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -511,6 +570,15 @@ def get_interview_results(request, entry_id):
             'error': f'An error occurred: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@extend_schema(
+    summary="Get Interview History",
+    description="Retrieves all past interview sessions for the authenticated user with their overall scores.",
+    responses={
+        200: OpenApiResponse(response=GetInterviewHistoryResponseSerializer, description="Interview history retrieved successfully."),
+        500: OpenApiResponse(description="Internal server error.")
+    },
+    tags=["Interview History"]
+)
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
