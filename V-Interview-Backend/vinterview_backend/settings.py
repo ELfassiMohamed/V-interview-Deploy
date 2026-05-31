@@ -31,6 +31,8 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS =  os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 GEMINI_API_KEY = config('GEMINI_API_KEY')
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY')
+PRIMARY_AI_MODEL = config('PRIMARY_AI_MODEL', default='gemini')
 
 
 # Application definition
