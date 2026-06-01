@@ -76,8 +76,6 @@ export default function AuthPage() {
                 VInterview
               </span>
             </Link>
-            <h1 className="text-2xl font-semibold tracking-tight text-purple-900">Welcome back</h1>
-            <p className="text-sm text-gray-600">Sign in to your account to continue your interview journey</p>
           </div>
 
           {/* Error Banner */}
@@ -156,26 +154,6 @@ export default function AuthPage() {
                       {isLoading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-purple-200" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-gray-500">Or continue with</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" type="button" className="border-purple-200 hover:bg-purple-50">
-                      <Github className="mr-2 h-4 w-4" />
-                      Google
-                    </Button>
-                    <Button variant="outline" type="button" className="border-purple-200 hover:bg-purple-50">
-                      <Facebook className="mr-2 h-4 w-4" />
-                      Facebook
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -236,26 +214,6 @@ export default function AuthPage() {
                       {isLoading ? "Creating account..." : "Create Account"}
                     </Button>
                   </form>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-purple-200" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-gray-500">Or continue with</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button variant="outline" type="button" className="border-purple-200 hover:bg-purple-50">
-                      <Github className="mr-2 h-4 w-4" />
-                      Google
-                    </Button>
-                    <Button variant="outline" type="button" className="border-purple-200 hover:bg-purple-50">
-                      <Facebook className="mr-2 h-4 w-4" />
-                      Facebook
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
